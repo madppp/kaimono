@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* M3 Green seed color scheme */
+  --md-primary: #386A20;
+  --md-on-primary: #FFFFFF;
+  --md-primary-container: #B8F397;
+  --md-on-primary-container: #042100;
+  --md-secondary: #55624C;
+  --md-on-secondary: #FFFFFF;
+  --md-secondary-container: #D9E7CB;
+  --md-on-secondary-container: #131F0D;
+  --md-tertiary: #386569;
+  --md-on-tertiary: #FFFFFF;
+  --md-tertiary-container: #BCEBEF;
+  --md-error: #BA1A1A;
+  --md-on-error: #FFFFFF;
+  --md-error-container: #FFDAD6;
+  --md-on-error-container: #410002;
+  --md-background: #F4F6EE;
+  --md-on-background: #1A1C18;
+  --md-surface: #FDFDF5;
+  --md-on-surface: #1A1C18;
+  --md-surface-variant: #DFE4D6;
+  --md-on-surface-variant: #43483E;
+  --md-outline: #73796E;
+  --md-outline-variant: #C3C8BC;
+  --md-surface-container-lowest: #FFFFFF;
+  --md-surface-container-low: #F4F6EE;
+  --md-surface-container: #EEF0E8;
+  --md-surface-container-high: #E8EBE3;
+  --md-surface-container-highest: #E3E5DD;
+
+  /* Elevation shadows (M3 tonal) */
+  --md-elevation-1: 0 1px 2px rgba(0,0,0,.1), 0 1px 3px 1px rgba(0,0,0,.08);
+  --md-elevation-2: 0 1px 2px rgba(0,0,0,.12), 0 2px 6px 2px rgba(0,0,0,.1);
+  --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--md-background);
+  color: var(--md-on-background);
+  font-family: "Roboto", "Noto Sans JP", system-ui, sans-serif;
+}
+
+/* M3 spring-like tap feedback */
+.md-ripple {
+  position: relative;
+  overflow: hidden;
+  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.md-ripple:active {
+  transform: scale(0.96);
+}
+
+/* Bottom sheet backdrop */
+.sheet-backdrop {
+  animation: fadeIn 200ms ease forwards;
+}
+.sheet-content {
+  animation: slideUp 350ms cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* FAB press */
+.fab {
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.fab:active {
+  transform: scale(0.94);
 }
