@@ -33,13 +33,16 @@
 ```
 /
 ├── app/
-│   ├── layout.tsx                  # ルートレイアウト（フォント・アイコン読み込み）
+│   ├── layout.tsx                  # ルートレイアウト（フォント・アイコン・viewport/PWAメタデータ）
 │   ├── globals.css                 # グローバルCSS（Tailwind + アニメーション定義）
+│   ├── manifest.ts                 # PWAマニフェスト（ホーム画面追加用）
+│   ├── icon.svg                    # アプリアイコン（favicon / manifest用）
+│   ├── apple-icon.png              # iOSホーム画面用アイコン（180x180）
 │   ├── page.tsx                    # トップページ（Server Component / DB取得）
 │   ├── HomeClient.tsx              # トップUI（リスト一覧・作成・削除）
 │   └── list/[id]/
 │       ├── page.tsx                # リスト詳細ページ（Server Component / DB取得）
-│       └── ListPageClient.tsx      # リスト詳細UI（アイテム管理全般）
+│       └── ListPageClient.tsx      # リスト詳細UI（アイテム管理・画面スリープ防止トグル）
 │
 ├── app/api/
 │   ├── lists/
@@ -62,6 +65,8 @@
 ├── lib/
 │   ├── db.ts                       # Prismaクライアント初期化（Turso/SQLite 切り替え）
 │   ├── categories.ts               # カテゴリプリセット定数
+│   ├── autoCategory.ts             # 食材名からカテゴリを自動判定する辞書
+│   ├── useWakeLock.ts              # 画面スリープ防止（Screen Wake Lock API）フック
 │   └── theme.ts                    # M3カラートークン定数
 │
 ├── prisma/
@@ -140,6 +145,7 @@ Turso DB（本番）/ SQLite（開発）
 
 ### リスト詳細ページ（`/list/[id]`）
 - Top App Bar（戻るボタン・テキストコピー・URL共有）
+- 画面スリープ防止トグル（Wake Lock対応端末のみ表示・設定はlocalStorageに保存）
 - 進捗バー（チェック済み / 総アイテム数）
 - カテゴリ別アイテム一覧
   - チェックボックス（購入済みで打ち消し線 + グレーアウト）
@@ -147,7 +153,8 @@ Turso DB（本番）/ SQLite（開発）
   - 削除ボタン（確認バー表示）
 - 購入済みアイテムセクション（下部に分離）
 - FAB「追加する」→ ボトムシートでフォーム表示
-- お買い物完了メッセージ（全チェック時）
+  - 食材名の入力中にカテゴリを自動判定（`lib/autoCategory.ts` / 手動選択が優先）
+- お買い物完了メッセージ（全チェック時・「もう一度このリストを使う」で全チェック解除）
 - Snackbar（操作フィードバック）
 
 ---
@@ -213,5 +220,5 @@ Turso DB (aws-ap-northeast-1)
 | 認証 | なし（URLを知っていれば誰でもアクセス可） | next-auth でGoogle/GitHubログイン追加 |
 | ユーザー管理 | なし | User テーブル追加・リストにuserId紐付け |
 | リアルタイム同期 | なし（リロードで最新化） | Vercel KV + Server-Sent Events |
-| オフライン対応 | なし | PWA化・Service Worker |
+| オフライン対応 | manifest対応済み（ホーム画面追加可） | Service Worker でキャッシュ対応 |
 | デザイン準拠 | M3参考実装（公式ライブラリ未使用） | `@material/web` 導入で完全準拠 |

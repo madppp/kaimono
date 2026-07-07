@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import CategoryPicker from "./CategoryPicker";
+import Icon from "./Icon";
+import { guessCategory } from "@/lib/autoCategory";
 import { t } from "@/lib/theme";
 
 interface ShoppingItem {
@@ -18,16 +20,41 @@ export default function AddItemForm({ listId, open, onClose, onItemAdded }: Prop
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [category, setCategory] = useState("その他");
+  const [categoryTouched, setCategoryTouched] = useState(false);
+  const [autoGuessed, setAutoGuessed] = useState(false);
+  const [added, setAdded] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [nameFocused, setNameFocused] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (open) setTimeout(() => nameRef.current?.focus(), 100);
   }, [open]);
 
   if (!open) return null;
+
+  // 名前からカテゴリを自動推測（手動でカテゴリを選んだ後は上書きしない）
+  const handleNameChange = (v: string) => {
+    setName(v);
+    setError("");
+    if (categoryTouched) return;
+    const guess = guessCategory(v);
+    if (guess) {
+      setCategory(guess);
+      setAutoGuessed(true);
+    } else if (autoGuessed) {
+      setCategory("その他");
+      setAutoGuessed(false);
+    }
+  };
+
+  const handleCategoryChange = (v: string) => {
+    setCategory(v);
+    setCategoryTouched(true);
+    setAutoGuessed(false);
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError("食材名を入力してください"); return; }
@@ -44,6 +71,11 @@ export default function AddItemForm({ listId, open, onClose, onItemAdded }: Prop
       onItemAdded(item);
       setName("");
       setQuantity(1);
+      setCategoryTouched(false);
+      setAutoGuessed(false);
+      if (addedTimer.current) clearTimeout(addedTimer.current);
+      setAdded(item.name);
+      addedTimer.current = setTimeout(() => setAdded(""), 2200);
       nameRef.current?.focus();
     } catch {
       setError("追加に失敗しました");
@@ -97,8 +129,9 @@ export default function AddItemForm({ listId, open, onClose, onItemAdded }: Prop
               ref={nameRef}
               type="text"
               value={name}
-              onChange={(e) => { setName(e.target.value); setError(""); }}
+              onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              enterKeyHint="done"
               onFocus={() => setNameFocused(true)}
               onBlur={() => setNameFocused(false)}
               placeholder="例：にんじん"
@@ -126,7 +159,13 @@ export default function AddItemForm({ listId, open, onClose, onItemAdded }: Prop
 
           {/* カテゴリ */}
           <div style={{ marginBottom: 24 }}>
-            <CategoryPicker value={category} onChange={setCategory} />
+            <CategoryPicker value={category} onChange={handleCategoryChange} />
+            {autoGuessed && (
+              <p style={{ marginTop: 8, fontSize: 12, color: t.primary, display: "flex", alignItems: "center", gap: 4 }}>
+                <Icon name="auto_awesome" size={14} color={t.primary} />
+                「{category}」を自動で選びました
+              </p>
+            )}
           </div>
 
           {/* Submit */}
@@ -143,6 +182,14 @@ export default function AddItemForm({ listId, open, onClose, onItemAdded }: Prop
           >
             {loading ? "追加中..." : "追加する"}
           </button>
+
+          {/* 追加完了フィードバック */}
+          {added && (
+            <p style={{ marginTop: 12, fontSize: 13, fontWeight: 500, color: t.primary, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Icon name="check_circle" size={16} color={t.primary} fill />
+              「{added}」を追加しました
+            </p>
+          )}
         </div>
       </div>
     </>

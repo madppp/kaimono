@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 
@@ -7,6 +7,12 @@ const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 export const metadata: Metadata = {
   title: "買い物リスト",
   description: "家族用スーパー買い物リスト",
+  applicationName: "買い物リスト",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "買い物リスト" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#EEF0E8",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

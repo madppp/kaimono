@@ -7,6 +7,7 @@ import ShoppingItemRow from "@/components/ShoppingItemRow";
 import ProgressBar from "@/components/ProgressBar";
 import { PRESET_CATEGORIES } from "@/lib/categories";
 import { t } from "@/lib/theme";
+import { useWakeLock } from "@/lib/useWakeLock";
 import Icon from "@/components/Icon";
 
 interface ShoppingItem {
@@ -21,8 +22,17 @@ export default function ListPageClient({ initialList }: { initialList: ShoppingL
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [snackbar, setSnackbar] = useState("");
+  const wakeLock = useWakeLock();
 
   const showSnackbar = (msg: string) => { setSnackbar(msg); setTimeout(() => setSnackbar(""), 3000); };
+
+  const handleKeepAwakeToggle = async () => {
+    const wasActive = wakeLock.active;
+    const nowActive = await wakeLock.toggle();
+    if (wasActive) showSnackbar("画面スリープ防止をオフにしました");
+    else if (nowActive) showSnackbar("買い物中も画面をつけたままにします");
+    else showSnackbar("いまは画面スリープ防止を使えませんでした");
+  };
 
   const checkedCount = items.filter((i) => i.checked).length;
   const total = items.length;
@@ -46,6 +56,16 @@ export default function ListPageClient({ initialList }: { initialList: ShoppingL
   };
 
   const handleItemAdded = (item: ShoppingItem) => setItems((prev) => [...prev, item]);
+
+  // 全チェックを外してリストを再利用（毎週の定番リスト用）
+  const handleUncheckAll = async () => {
+    const checkedIds = items.filter((i) => i.checked).map((i) => i.id);
+    setItems((prev) => prev.map((i) => ({ ...i, checked: false })));
+    showSnackbar("チェックをぜんぶ外しました");
+    await Promise.all(checkedIds.map((id) =>
+      fetch(`/api/items/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ checked: false }) })
+    ));
+  };
 
   const handleToggle = useCallback(async (itemId: string, checked: boolean) => {
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, checked } : i)));
@@ -107,6 +127,27 @@ export default function ListPageClient({ initialList }: { initialList: ShoppingL
       </div>
 
       <div style={{ maxWidth: 512, margin: "0 auto", padding: "16px 16px 0" }}>
+        {/* 画面スリープ防止トグル（対応端末のみ表示） */}
+        {wakeLock.supported && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+            <button
+              onClick={handleKeepAwakeToggle}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 14px 6px 10px", borderRadius: 9999,
+                fontSize: 13, fontWeight: 500, minHeight: 36, cursor: "pointer",
+                backgroundColor: wakeLock.active ? t.secondaryContainer : "transparent",
+                color: wakeLock.active ? t.onSecondaryContainer : t.onSurfaceVariant,
+                border: `1px solid ${wakeLock.active ? "transparent" : t.outlineVariant}`,
+                transition: "all 150ms",
+              }}
+            >
+              <Icon name="lightbulb" size={16} fill={wakeLock.active} />
+              画面をつけたまま{wakeLock.active ? "：ON" : ""}
+            </button>
+          </div>
+        )}
+
         {total > 0 && <div style={{ marginBottom: 12 }}><ProgressBar checked={checkedCount} total={total} /></div>}
 
         {/* 完了メッセージ */}
@@ -115,6 +156,18 @@ export default function ListPageClient({ initialList }: { initialList: ShoppingL
             <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
             <p style={{ fontWeight: 600, fontSize: 18 }}>お買い物完了！</p>
             <p style={{ fontSize: 14, marginTop: 4, opacity: 0.75 }}>全部そろいましたね</p>
+            <button
+              onClick={handleUncheckAll}
+              style={{
+                marginTop: 16, padding: "10px 20px", borderRadius: 9999, border: "none",
+                backgroundColor: t.primary, color: t.onPrimary, fontWeight: 600, fontSize: 14,
+                minHeight: 44, cursor: "pointer",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <Icon name="refresh" size={18} color={t.onPrimary} />
+              もう一度このリストを使う
+            </button>
           </div>
         )}
 
